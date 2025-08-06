@@ -91,74 +91,29 @@ class RequestController {
   async respondToRequest(req, res) {
     try {
       const { requestId } = req.params;
-      const { action } = req.body; // 'accept' or 'reject'
+      const { message, status } = req.body;
 
-      const request = await Request.findOne({
-        _id: requestId,
-        supplier: req.user._id
-      });
-
+      // Find the request
+      const request = await Request.findById(requestId);
       if (!request) {
         return res.status(404).json({ error: 'Request not found' });
       }
 
-      if (request.status !== 'pending') {
-        return res.status(400).json({ error: 'Request already processed' });
+      // Check if the user is the supplier
+      if (request.supplier._id.toString() !== req.user._id.toString()) {
+        return res.status(403).json({ error: 'Access denied' });
       }
 
-      if (action === 'reject') {
-        request.status = 'rejected';
-        request.respondedAt = new Date();
-        await request.save();
-        
-        return res.json({
-          success: true,
-          message: 'Request rejected',
-          request
-        });
+      // Update the request
+      request.status = status || 'pending';
+      if (message) {
+        request.messages = request.messages || [];
+        request.messages.push({ sender: 'supplier', text: message, date: new Date() });
       }
 
-      // If accepting, fetch data from ERPNext
-      const supplier = await User.findById(req.user._id);
-      
-      if (!supplier.erpnextSupplierName) {
-        return res.status(400).json({ 
-          error: 'ERPNext supplier name not configured. Please update your profile.' 
-        });
-      }
-
-      let responseData = {};
-
-      switch (request.requestType) {
-        case 'land_plot':
-          responseData.landPlots = await erpnextService.getLandPlotData(supplier.erpnextSupplierName);
-          break;
-          
-        case 'product_data':
-          responseData.products = await erpnextService.getProductData(supplier.erpnextSupplierName);
-          break;
-          
-        case 'purchase_order':
-          responseData.purchaseOrders = await erpnextService.getPurchaseOrders(supplier.erpnextSupplierName);
-          break;
-          
-        default:
-          return res.status(400).json({ error: 'Invalid request type' });
-      }
-
-      // Update request
-      request.status = 'completed';
-      request.responseData = responseData;
-      request.respondedAt = new Date();
-      
       await request.save();
 
-      res.json({
-        success: true,
-        message: 'Request completed successfully',
-        request,
-        data: responseData
-      });
+      res.json({ success: true, request });
     } catch (error) {
       console.error('Respond to request error:', error);
       res.status(500).json({ error: 'Failed to respond to request' });

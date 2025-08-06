@@ -42,6 +42,7 @@ import { useAuth } from '../context/AuthContext';
 import { requestService } from '../services/requestService';
 import { dataService } from '../services/dataService';
 import { toast } from 'react-toastify';
+import RespondToRequestModal from '../components/RespondToRequestModal';
 
 const Requests = () => {
   const navigate = useNavigate();
@@ -58,6 +59,7 @@ const Requests = () => {
     requestedProducts: []
   });
   const [shareDialog, setShareDialog] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [selectedPlots, setSelectedPlots] = useState([]);
   const [availablePlots, setAvailablePlots] = useState([
@@ -124,6 +126,18 @@ const Requests = () => {
       fetchRequests();
     } catch (error) {
       toast.error(`Failed to ${action} request`);
+    }
+  };
+
+  const handleRespond = async ({ message, status }) => {
+    try {
+      await requestService.respondToRequest(selectedRequest._id, { message, status });
+      setModalOpen(false);
+      setSelectedRequest(null);
+      // Refresh requests or update UI
+      fetchRequests();
+    } catch (error) {
+      console.error('Failed to respond to request:', error);
     }
   };
 
@@ -232,15 +246,17 @@ const Requests = () => {
                   >
                     <ViewIcon />
                   </IconButton>
-                  {isSupplier && request.status === 'pending' && request.requestType === 'land_plot' && (
+                  {isSupplier && request.status === 'pending' && (
                     <Button
                       size="small"
                       variant="contained"
                       color="primary"
-                      onClick={() => handleSharePlots(request)}
-                      startIcon={<CheckIcon />}
+                      onClick={() => {
+                        setSelectedRequest(request);
+                        setModalOpen(true);
+                      }}
                     >
-                      Share Plots
+                      Respond
                     </Button>
                   )}
                 </TableCell>
@@ -333,6 +349,13 @@ const Requests = () => {
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* Respond To Request Modal */}
+      <RespondToRequestModal
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+        onSubmit={handleRespond}
+      />
     </Box>
   );
 };
