@@ -37,6 +37,7 @@ import { dataService } from '../services/dataService';
 import { requestService } from '../services/requestService';
 import { toast } from 'react-toastify';
 import { useNavigate } from 'react-router-dom';
+import { customerService } from '../services/customerService';
 
 const BrowseSuppliers = () => {
   const navigate = useNavigate();
@@ -56,49 +57,22 @@ const BrowseSuppliers = () => {
 
   const fetchSuppliers = async () => {
     try {
-      const response = await dataService.getSuppliers();
+      
+      const response = await customerService.getSuppliers();
       setSuppliers(response.data.suppliers);
     } catch (error) {
       toast.error('Failed to fetch suppliers');
     }
   };
 
-  const handleViewProducts = async (supplier) => {
-    setSelectedSupplier(supplier);
-    // Mock products for now - in real implementation, fetch from API
-    setSupplierProducts([
-      { 
-        id: 1, 
-        name: 'Coffee Beans - Arabica', 
-        category: 'Coffee', 
-        origin: 'Brazil',
-        landPlots: [
-          { name: 'Plot A1', area: '50 hectares', coordinates: { lat: -15.7801, lng: -47.9292 } },
-          { name: 'Plot A2', area: '30 hectares', coordinates: { lat: -15.7901, lng: -47.9392 } }
-        ]
-      },
-      { 
-        id: 2, 
-        name: 'Coffee Beans - Robusta', 
-        category: 'Coffee', 
-        origin: 'Vietnam',
-        landPlots: [
-          { name: 'Plot B1', area: '40 hectares', coordinates: { lat: 10.8231, lng: 106.6297 } }
-        ]
-      },
-      { 
-        id: 3, 
-        name: 'Cocoa Beans', 
-        category: 'Cocoa', 
-        origin: 'Ghana',
-        landPlots: [
-          { name: 'Plot C1', area: '60 hectares', coordinates: { lat: 7.9465, lng: -1.0232 } }
-        ]
-      }
-    ]);
-    setProductDialogOpen(true);
+    const handleViewProducts = async (supplier) => {
+    setSelectedSupplier(supplier); // ADD THIS LINE - it's missing!
+    try{
+      const res = await customerService.getSupplierProducts(supplier._id);
+      setSupplierProducts(res.data.products || []);
+      setProductDialogOpen(true);
+    }catch(e){ toast.error('Failed to load products'); }
   };
-
   const handleCreateRequest = () => {
     if (selectedProducts.length === 0) {
       toast.error('Please select at least one product');
@@ -108,37 +82,44 @@ const BrowseSuppliers = () => {
     setRequestDialogOpen(true);
   };
 
-  const handleSubmitRequest = async () => {
-    try {
-      await requestService.createRequest({
-        supplierId: selectedSupplier._id,
-        requestType,
-        message,
-        requestedProducts: selectedProducts.map(p => ({
-          productCode: p.id,
-          productName: p.name,
-          category: p.category
-        }))
-      });
-      toast.success('Request sent successfully');
-      setRequestDialogOpen(false);
-      setSelectedProducts([]);
-      setMessage('');
-      navigate('/requests');
-    } catch (error) {
-      toast.error('Failed to create request');
-    }
-  };
 
+  const handleSubmitRequest = async () => {
+  try {
+    await requestService.createRequest({
+      supplierId: selectedSupplier._id,
+      requestType,
+      message,
+      requestedProducts: selectedProducts.map(p => ({
+        productId: p._id
+      }))
+    });
+    toast.success('Request sent successfully');
+    setRequestDialogOpen(false);
+    setSelectedProducts([]);
+    setMessage('');
+    navigate('/requests');
+  } catch (error) {
+    console.error('Request creation error:', error); // ADD THIS to see the actual error
+    toast.error(error.response?.data?.error || 'Failed to create request'); // IMPROVE error message
+  }
+};
+
+  // const handleProductSelect = (product) => {
+  //   const isSelected = selectedProducts.find(p => p.id === product.id);
+  //   if (isSelected) {
+  //     setSelectedProducts(selectedProducts.filter(p => p.id !== product.id));
+  //   } else {
+  //     setSelectedProducts([...selectedProducts, product]);
+  //   }
+  // };
   const handleProductSelect = (product) => {
-    const isSelected = selectedProducts.find(p => p.id === product.id);
+    const isSelected = selectedProducts.find(p => p._id === product._id); // CHANGE: use _id instead of id
     if (isSelected) {
-      setSelectedProducts(selectedProducts.filter(p => p.id !== product.id));
+      setSelectedProducts(selectedProducts.filter(p => p._id !== product._id)); // CHANGE: use _id
     } else {
       setSelectedProducts([...selectedProducts, product]);
     }
   };
-
   const handleViewOnMap = (product) => {
     // Navigate to map view with product data
     navigate('/map', { 
@@ -229,7 +210,7 @@ const BrowseSuppliers = () => {
           <List>
             {supplierProducts.map((product) => (
               <ListItem 
-                key={product.id}
+                key={product._id}
                 sx={{ 
                   border: '1px solid #e0e0e0', 
                   borderRadius: 1, 
@@ -239,8 +220,12 @@ const BrowseSuppliers = () => {
                 }}
               >
                 <Box sx={{ width: '100%', display: 'flex', alignItems: 'center' }}>
-                  <Checkbox
+                  {/* <Checkbox
                     checked={selectedProducts.some(p => p.id === product.id)}
+                    onChange={() => handleProductSelect(product)}
+                  /> */}
+                  <Checkbox
+                    checked={selectedProducts.some(p => p._id === product._id)} // CHANGE: use _id instead of id
                     onChange={() => handleProductSelect(product)}
                   />
                   <ListItemText
@@ -304,7 +289,7 @@ const BrowseSuppliers = () => {
             </Typography>
             {selectedProducts.map(p => (
               <Chip 
-                key={p.id} 
+                key={p._id} 
                 label={p.name} 
                 size="small" 
                 sx={{ mr: 1, mb: 1 }}

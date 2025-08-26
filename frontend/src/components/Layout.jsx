@@ -26,8 +26,11 @@ import {
   Inventory as InventoryIcon,
   Person as PersonIcon,
   Logout as LogoutIcon,
-  Storefront as StorefrontIcon, // <-- Add this line
-  Quiz as QuizIcon
+  Storefront as StorefrontIcon,
+  Quiz as QuizIcon,
+  Assessment as AssessmentIcon,
+  Business as BusinessIcon,
+  Inventory2 as BatchIcon
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -39,7 +42,10 @@ const Layout = ({ children }) => {
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
+  const logout = () => {
+    // Logout function implementation
+  };
   
   const [mobileOpen, setMobileOpen] = useState(false);
   const [anchorEl, setAnchorEl] = useState(null);
@@ -61,12 +67,21 @@ const Layout = ({ children }) => {
     navigate('/login');
   };
 
-    const menuItems = [
+  // Updated menu items with role-based access for new pages
+  const menuItems = [
     { text: 'Dashboard', icon: <DashboardIcon />, path: '/', roles: ['supplier', 'customer'] },
+    
+    // Customer/Importer-only pages
     { text: 'Browse Suppliers', icon: <StorefrontIcon />, path: '/browse-suppliers', roles: ['customer'] },
-    { text: 'Requests', icon: <AssignmentIcon />, path: '/requests', roles: ['supplier', 'customer'] },
+    { text: 'Supplier Management', icon: <BusinessIcon />, path: '/suppliers', roles: ['customer'] },
+    { text: 'Risk Dashboard', icon: <AssessmentIcon />, path: '/risk-dashboard', roles: ['customer'] },
+    { text: 'Product Requests', icon: <AssignmentIcon />, path: '/request-list', roles: ['customer'] },
+    
+    // Supplier-only pages
+    { text: 'Requests', icon: <AssignmentIcon />, path: '/requests', roles: ['supplier'] },
     { text: 'Questionnaires', icon: <QuizIcon />, path: '/questionnaires', roles: ['supplier'] },
     { text: 'Land Plots', icon: <LandscapeIcon />, path: '/land-plots', roles: ['supplier'] },
+    { text: 'Batches', icon: <BatchIcon />, path: '/batches', roles: ['supplier'] },
     { text: 'Products', icon: <InventoryIcon />, path: '/products', roles: ['supplier'] },
   ].filter(item => item.roles.includes(user?.role));
 
@@ -81,7 +96,7 @@ const Layout = ({ children }) => {
       
       <Box sx={{ px: 2, py: 2 }}>
         <Chip 
-          label={user?.role === 'supplier' ? 'Supplier' : 'Customer'} 
+          label={user?.role === 'supplier' ? 'Supplier' : user?.role === 'customer' ? 'Importer' : 'User'} 
           color="primary" 
           size="small"
           sx={{ mb: 2 }}
@@ -122,6 +137,40 @@ const Layout = ({ children }) => {
             <ListItemText primary={item.text} />
           </ListItem>
         ))}
+        
+        {/* Legacy Create Supplier link for customers (can be removed if redundant) */}
+        {user?.role === 'customer' && (
+          <ListItem
+            button
+            onClick={() => {
+              navigate('/create-supplier');
+              if (isMobile) setMobileOpen(false);
+            }}
+            selected={location.pathname === '/create-supplier'}
+            sx={{
+              mb: 1,
+              borderRadius: 2,
+              '&.Mui-selected': {
+                backgroundColor: 'primary.main',
+                color: 'white',
+                '& .MuiListItemIcon-root': {
+                  color: 'white',
+                },
+                '&:hover': {
+                  backgroundColor: 'primary.dark',
+                },
+              },
+              '&:hover': {
+                backgroundColor: 'action.hover',
+              },
+            }}
+          >
+            <ListItemIcon sx={{ minWidth: 40 }}>
+              <StorefrontIcon />
+            </ListItemIcon>
+            <ListItemText primary="Create Supplier" />
+          </ListItem>
+        )}
       </List>
     </Box>
   );

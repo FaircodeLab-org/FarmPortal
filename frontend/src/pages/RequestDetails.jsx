@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Map as MapIcon } from '@mui/icons-material';
 import {
   Box,
   Paper,
@@ -14,7 +15,7 @@ import {
 import { ArrowBack } from '@mui/icons-material';
 import { useParams, useNavigate } from 'react-router-dom';
 import { requestService } from '../services/requestService';
-import { format } from 'date-fns';
+// Removed date-fns import
 
 const RequestDetails = () => {
   const { id } = useParams();
@@ -52,6 +53,14 @@ const RequestDetails = () => {
       </Box>
     );
   }
+
+  // Helper to format date as string (YYYY-MM-DD)
+  const formatDate = (date) => {
+    if (!date) return '-';
+    const d = new Date(date);
+    if (isNaN(d)) return '-';
+    return d.toLocaleDateString();
+  };
 
   return (
     <Box>
@@ -132,6 +141,36 @@ const RequestDetails = () => {
                   </pre>
                 </>
               )}
+              {request.responseData?.landPlots && (
+                <Box sx={{ mt: 2 }}>
+                  <Button
+                    variant="outlined"
+                    startIcon={<MapIcon />}
+                    onClick={() => navigate('/map', {
+                      state: {
+                        requestGeojson: request.responseData,
+                        supplier: request.supplier
+                      }
+                    })}
+                  >
+                    View Land Plots on Map
+                  </Button>
+                </Box>
+              )}
+              {request.responseData?.geojson && (
+                <Button
+                  variant="outlined"
+                  sx={{ mt: 2 }}
+                  onClick={() => navigate('/map', {
+                    state: {
+                      product: { name: 'Request result', landPlots: [{ geojson: request.responseData.geojson }] },
+                      supplier: request.supplier
+                    }
+                  })}
+                >
+                  View Map
+                </Button>
+              )}
             </CardContent>
           </Card>
         </Grid>
@@ -190,6 +229,95 @@ const RequestDetails = () => {
           </Card>
         </Grid>
       </Grid>
+
+      {request.requestType === 'product_data' && request.eudrCompliance && (
+        <>
+          <Divider sx={{ my: 3 }} />
+          <Typography variant="h6" gutterBottom>
+            EUDR Compliance Assessment Results
+          </Typography>
+          
+          <Grid container spacing={2}>
+            <Grid item xs={12} md={6}>
+              <Typography variant="body2" color="text.secondary">
+                Deforestation Status
+              </Typography>
+              <Chip 
+                label={request.eudrCompliance.deforestationFree === 'yes' ? 'Deforestation Free' : 'Not Verified'}
+                color={request.eudrCompliance.deforestationFree === 'yes' ? 'success' : 'error'}
+                size="small"
+              />
+            </Grid>
+            
+            <Grid item xs={12} md={6}>
+              <Typography variant="body2" color="text.secondary">
+                Legal Compliance
+              </Typography>
+              <Chip 
+                label={request.eudrCompliance.legalCompliance}
+                color={request.eudrCompliance.legalCompliance === 'compliant' ? 'success' : 'warning'}
+                size="small"
+              />
+            </Grid>
+            
+            <Grid item xs={12}>
+              <Typography variant="body2" color="text.secondary">
+                Certifications
+              </Typography>
+              <Box sx={{ mt: 1 }}>
+                {request.eudrCompliance.certifications?.map(cert => (
+                  <Chip key={cert} label={cert} size="small" sx={{ mr: 1, mb: 1 }} />
+                ))}
+              </Box>
+            </Grid>
+            
+            <Grid item xs={12}>
+              <Typography variant="body2" color="text.secondary">
+                Risk Assessment
+              </Typography>
+              <Typography>
+                {request.eudrCompliance.riskAssessment === 'yes' 
+                  ? 'EUDR-specific procedures implemented' 
+                  : 'No EUDR-specific procedures'}
+              </Typography>
+            </Grid>
+            
+            <Grid item xs={12}>
+              <Typography variant="body2" color="text.secondary">
+                Sustainability Measures
+              </Typography>
+              <Typography>
+                {request.eudrCompliance.sustainabilityMeasures || 'Not provided'}
+              </Typography>
+            </Grid>
+            
+            {request.eudrCompliance.evidenceFile && (
+              <Grid item xs={12}>
+                <Typography variant="body2" color="text.secondary">
+                  Evidence Document
+                </Typography>
+                <Button
+                  variant="outlined"
+                  size="small"
+                  href={`/api/uploads/eudr-evidence/${request.eudrCompliance.evidenceFile.filename}`}
+                  target="_blank"
+                >
+                  Download Evidence ({request.eudrCompliance.evidenceFile.originalName})
+                </Button>
+              </Grid>
+            )}
+            
+            <Grid item xs={12}>
+              <Typography variant="body2" color="text.secondary">
+                Assessment Date
+              </Typography>
+              <Typography>
+                {new Date(request.eudrCompliance.submittedAt).toLocaleDateString()}
+              </Typography>
+            </Grid>
+          </Grid>
+        </>
+      )}
     </Box>
   );
 };

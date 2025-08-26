@@ -3,6 +3,11 @@ import axios from 'axios';
 const API = axios.create({
   baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000/api',
 });
+// const API = axios.create({
+//   baseURL: process.env.NODE_ENV === 'production' 
+//     ? 'https://0d4a1392f97c.ngrok-free.app/api'
+//     : import.meta.env.VITE_API_URL || 'http://localhost:5000/api',
+// });
 
 // Request interceptor
 API.interceptors.request.use(

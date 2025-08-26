@@ -66,32 +66,65 @@ const Dashboard = () => {
     }
   };
 
-  const StatCard = ({ title, value, icon, color }) => (
-    <Card sx={{ height: '100%' }}>
-      <CardContent>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
-          <Box>
-            <Typography color="text.secondary" gutterBottom>
-              {title}
-            </Typography>
-            <Typography variant="h4" component="div">
-              {value}
-            </Typography>
-          </Box>
-          <Box sx={{ 
-            backgroundColor: `${color}.light`, 
-            borderRadius: 2, 
-            p: 1,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center'
-          }}>
-            {icon}
-          </Box>
+  // const StatCard = ({ title, value, icon, color }) => (
+  //   // <Card sx={{ height: '100%' }}>
+  //   <Card 
+  //   sx={{ height: '100%', cursor: 'pointer' }} // Add cursor style for clickable effect
+  //   onClick={onClick} // Add onClick handler
+  //   >
+  //     <CardContent>
+  //       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+  //         <Box>
+  //           <Typography color="text.secondary" gutterBottom>
+  //             {title}
+  //           </Typography>
+  //           <Typography variant="h4" component="div">
+  //             {value}
+  //           </Typography>
+  //         </Box>
+  //         <Box sx={{ 
+  //           backgroundColor: `${color}.light`, 
+  //           borderRadius: 2, 
+  //           p: 1,
+  //           display: 'flex',
+  //           alignItems: 'center',
+  //           justifyContent: 'center'
+  //         }}>
+  //           {icon}
+  //         </Box>
+  //       </Box>
+  //     </CardContent>
+  //   </Card>
+  // );
+  const StatCard = ({ title, value, icon, color, onClick }) => (
+  <Card 
+    sx={{ height: '100%', cursor: 'pointer' }} // Add cursor style for clickable effect
+    onClick={onClick} // Add onClick handler
+  >
+    <CardContent>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+        <Box>
+          <Typography color="text.secondary" gutterBottom>
+            {title}
+          </Typography>
+          <Typography variant="h4" component="div">
+            {value}
+          </Typography>
         </Box>
-      </CardContent>
-    </Card>
-  );
+        <Box sx={{ 
+          backgroundColor: `${color}.light`, 
+          borderRadius: 2, 
+          p: 1,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center'
+        }}>
+          {icon}
+        </Box>
+      </Box>
+    </CardContent>
+  </Card>
+);
 
   if (loading) {
     return <LinearProgress />;
@@ -102,14 +135,54 @@ const Dashboard = () => {
       <Typography variant="h4" sx={{ mb: 4, fontWeight: 600 }}>
         Welcome back, {user?.companyName}!
       </Typography>
-
       <Grid container spacing={3} sx={{ mb: 4 }}>
+      <Grid item xs={12} sm={6} md={3}>
+        <StatCard
+          title="Total Requests"
+          value={stats.totalRequests}
+          icon={<Assignment sx={{ color: 'primary.main' }} />}
+          color="primary"
+          onClick={() => navigate('/requests?status=all')} // Add navigation
+        />
+      </Grid>
+      <Grid item xs={12} sm={6} md={3}>
+        <StatCard
+          title="Pending Requests"
+          value={stats.pendingRequests}
+          icon={<Warning sx={{ color: 'warning.main' }} />}
+          color="warning"
+          onClick={() => navigate('/requests?status=pending')} // Add navigation
+        />
+      </Grid>
+      <Grid item xs={12} sm={6} md={3}>
+        <StatCard
+          title="Completed Requests"
+          value={stats.completedRequests}
+          icon={<CheckCircle sx={{ color: 'success.main' }} />}
+          color="success"
+          onClick={() => navigate('/requests?status=completed')} // Add navigation
+        />
+      </Grid>
+      {isSupplier && (
+        <Grid item xs={12} sm={6} md={3}>
+          <StatCard
+            title="Compliance Rate"
+            value="95%"
+            icon={<TrendingUp sx={{ color: 'info.main' }} />}
+            color="info"
+            onClick={() => navigate('/compliance')} // Example navigation
+          />
+        </Grid>
+      )}
+    </Grid>
+      {/* <Grid container spacing={3} sx={{ mb: 4 }}>
         <Grid item xs={12} sm={6} md={3}>
           <StatCard
             title="Total Requests"
             value={stats.totalRequests}
             icon={<Assignment sx={{ color: 'primary.main' }} />}
             color="primary"
+            onClick={() => navigate('/requests?status=all')}
           />
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
@@ -118,6 +191,7 @@ const Dashboard = () => {
             value={stats.pendingRequests}
             icon={<Warning sx={{ color: 'warning.main' }} />}
             color="warning"
+            onClick={() => navigate('/requests?status=pending')}
           />
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
@@ -126,6 +200,7 @@ const Dashboard = () => {
             value={stats.completedRequests}
             icon={<CheckCircle sx={{ color: 'success.main' }} />}
             color="success"
+            onClick={() => navigate('/requests?status=completed')}
           />
         </Grid>
         {isSupplier && (
@@ -135,10 +210,11 @@ const Dashboard = () => {
               value="95%"
               icon={<TrendingUp sx={{ color: 'info.main' }} />}
               color="info"
+              onClick={() => navigate('/compliance')}
             />
           </Grid>
         )}
-      </Grid>
+      </Grid> */}
 
       <Grid container spacing={3}>
         <Grid item xs={12} md={8}>
