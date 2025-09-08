@@ -187,6 +187,7 @@ import LandPlotForm from './pages/LandPlotForm';
 import BatchForm from './pages/BatchForm';
 import AnswerRequestForm from './pages/AnswerRequestForm';
 import Suppliers from './pages/Suppliers';
+import OrganizationProfile from './pages/OrganizationProfile';
 
 // Theme
 const theme = createTheme({
@@ -256,6 +257,14 @@ function App() {
                 <ProtectedRoute>
                   <Layout>
                     <Profile />
+                  </Layout>
+                </ProtectedRoute>
+              } />
+
+              <Route path="/organization-profile" element={
+                <ProtectedRoute>
+                  <Layout>
+                    <OrganizationProfile />
                   </Layout>
                 </ProtectedRoute>
               } />

@@ -216,6 +216,10 @@ const Layout = ({ children }) => {
                 <ListItemIcon><PersonIcon fontSize="small" /></ListItemIcon>
                 Profile
               </MenuItem>
+              <MenuItem onClick={() => { navigate('/organization-profile'); handleProfileMenuClose(); }}>
+                <ListItemIcon><BusinessIcon fontSize="small" /></ListItemIcon>
+                Organization Profile
+              </MenuItem>
               <Divider />
               <MenuItem onClick={handleLogout}>
                 <ListItemIcon><LogoutIcon fontSize="small" /></ListItemIcon>
